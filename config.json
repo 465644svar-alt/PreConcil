@@ -1,0 +1,14 @@
+{
+  "api_keys": {
+    "openai": "",
+    "anthropic": "",
+    "google": "",
+    "yandex": "",
+    "cohere": ""
+  },
+  "telegram": {
+    "bot_token": "",
+    "chat_id": ""
+  },
+  "last_directory": "C:/Users/moneymaker/Desktop/questions"
+}

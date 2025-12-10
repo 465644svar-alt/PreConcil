@@ -16,7 +16,7 @@ from pathlib import Path
 class NeuralNetworkApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Менеджер нейросетей v1.2")
+        self.root.title("Менеджер нейросетей v2.0")
         self.root.geometry("900x700")
 
         # Конфигурация
@@ -147,8 +147,7 @@ class NeuralNetworkApp:
 
         self.network_checkbuttons = {}
         for i, (name, var) in enumerate(self.networks_vars.items()):
-            cb = ttk.Checkbutton(networks_frame, text=name, variable=var,
-                                 command=lambda n=name: self.update_network_selection(n))
+            cb = ttk.Checkbutton(networks_frame, text=name, variable=var)
             cb.grid(row=i // 2, column=i % 2, sticky='w', padx=10, pady=2)
             self.network_checkbuttons[name] = cb
 
@@ -162,8 +161,8 @@ class NeuralNetworkApp:
                    style="Accent.TButton").pack(side='left', padx=5)
         ttk.Button(button_frame, text="Сохранить конфигурацию",
                    command=self.save_configuration).pack(side='left', padx=5)
-        ttk.Button(button_frame, text="Очистить историю",
-                   command=self.clear_history).pack(side='left', padx=5)
+        ttk.Button(button_frame, text="Очистить лог",
+                   command=self.clear_log).pack(side='left', padx=5)
 
         # Прогресс-бар и лог
         self.progress = ttk.Progressbar(self.main_tab, mode='indeterminate')
@@ -194,10 +193,10 @@ class NeuralNetworkApp:
 
         ttk.Label(openai_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
         self.openai_key_var = tk.StringVar()
-        openai_entry = ttk.Entry(openai_frame, textvariable=self.openai_key_var, width=60, show="*")
-        openai_entry.grid(row=1, column=0, padx=(0, 10))
+        self.openai_entry = ttk.Entry(openai_frame, textvariable=self.openai_key_var, width=60, show="*")
+        self.openai_entry.grid(row=1, column=0, padx=(0, 10))
         ttk.Button(openai_frame, text="Показать",
-                   command=lambda e=openai_entry: self.toggle_password_entry(e)).grid(row=1, column=1)
+                   command=lambda: self.toggle_password(self.openai_entry)).grid(row=1, column=1)
 
         # Anthropic
         anthropic_frame = ttk.LabelFrame(self.api_tab, text="Anthropic API", padding=10)
@@ -205,10 +204,10 @@ class NeuralNetworkApp:
 
         ttk.Label(anthropic_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
         self.anthropic_key_var = tk.StringVar()
-        anthropic_entry = ttk.Entry(anthropic_frame, textvariable=self.anthropic_key_var, width=60, show="*")
-        anthropic_entry.grid(row=1, column=0, padx=(0, 10))
+        self.anthropic_entry = ttk.Entry(anthropic_frame, textvariable=self.anthropic_key_var, width=60, show="*")
+        self.anthropic_entry.grid(row=1, column=0, padx=(0, 10))
         ttk.Button(anthropic_frame, text="Показать",
-                   command=lambda e=anthropic_entry: self.toggle_password_entry(e)).grid(row=1, column=1)
+                   command=lambda: self.toggle_password(self.anthropic_entry)).grid(row=1, column=1)
 
         # Google AI
         google_frame = ttk.LabelFrame(self.api_tab, text="Google AI API", padding=10)
@@ -216,10 +215,10 @@ class NeuralNetworkApp:
 
         ttk.Label(google_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
         self.google_key_var = tk.StringVar()
-        google_entry = ttk.Entry(google_frame, textvariable=self.google_key_var, width=60, show="*")
-        google_entry.grid(row=1, column=0, padx=(0, 10))
+        self.google_entry = ttk.Entry(google_frame, textvariable=self.google_key_var, width=60, show="*")
+        self.google_entry.grid(row=1, column=0, padx=(0, 10))
         ttk.Button(google_frame, text="Показать",
-                   command=lambda e=google_entry: self.toggle_password_entry(e)).grid(row=1, column=1)
+                   command=lambda: self.toggle_password(self.google_entry)).grid(row=1, column=1)
 
         # YandexGPT
         yandex_frame = ttk.LabelFrame(self.api_tab, text="YandexGPT API", padding=10)
@@ -227,10 +226,10 @@ class NeuralNetworkApp:
 
         ttk.Label(yandex_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
         self.yandex_key_var = tk.StringVar()
-        yandex_entry = ttk.Entry(yandex_frame, textvariable=self.yandex_key_var, width=60, show="*")
-        yandex_entry.grid(row=1, column=0, padx=(0, 10))
+        self.yandex_entry = ttk.Entry(yandex_frame, textvariable=self.yandex_key_var, width=60, show="*")
+        self.yandex_entry.grid(row=1, column=0, padx=(0, 10))
         ttk.Button(yandex_frame, text="Показать",
-                   command=lambda e=yandex_entry: self.toggle_password_entry(e)).grid(row=1, column=1)
+                   command=lambda: self.toggle_password(self.yandex_entry)).grid(row=1, column=1)
 
         # Cohere
         cohere_frame = ttk.LabelFrame(self.api_tab, text="Cohere API", padding=10)
@@ -238,10 +237,10 @@ class NeuralNetworkApp:
 
         ttk.Label(cohere_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
         self.cohere_key_var = tk.StringVar()
-        cohere_entry = ttk.Entry(cohere_frame, textvariable=self.cohere_key_var, width=60, show="*")
-        cohere_entry.grid(row=1, column=0, padx=(0, 10))
+        self.cohere_entry = ttk.Entry(cohere_frame, textvariable=self.cohere_key_var, width=60, show="*")
+        self.cohere_entry.grid(row=1, column=0, padx=(0, 10))
         ttk.Button(cohere_frame, text="Показать",
-                   command=lambda e=cohere_entry: self.toggle_password_entry(e)).grid(row=1, column=1)
+                   command=lambda: self.toggle_password(self.cohere_entry)).grid(row=1, column=1)
 
         # Telegram Bot
         telegram_frame = ttk.LabelFrame(self.api_tab, text="Telegram Bot API", padding=10)
@@ -267,8 +266,7 @@ class NeuralNetworkApp:
 
         # Создаем виджеты для отображения статуса
         self.status_labels = {}
-        status_grid = ttk.Frame(status_frame)
-        status_grid.pack(fill='both', expand=True)
+        self.status_text_vars = {}
 
         networks = [
             ("OpenAI GPT", self.openai_key_var),
@@ -280,41 +278,87 @@ class NeuralNetworkApp:
         ]
 
         for i, (name, key_var) in enumerate(networks):
+            # Фрейм для каждого сервиса
+            service_frame = ttk.Frame(status_frame)
+            service_frame.pack(fill='x', padx=10, pady=5)
+
             # Название сервиса
-            ttk.Label(status_grid, text=f"{name}:", font=('TkDefaultFont', 10)).grid(
-                row=i, column=0, sticky='w', padx=10, pady=5)
+            ttk.Label(service_frame, text=f"{name}:", width=15, anchor='w').pack(side='left', padx=(0, 10))
 
             # Индикатор статуса
-            status_canvas = tk.Canvas(status_grid, width=20, height=20, bg='white', highlightthickness=0)
-            status_canvas.grid(row=i, column=1, padx=5, pady=5)
+            status_canvas = tk.Canvas(service_frame, width=20, height=20, bg='white', highlightthickness=0)
+            status_canvas.pack(side='left', padx=(0, 10))
             self.status_labels[name] = status_canvas
 
-            # Описание статуса
-            self.status_text_var = tk.StringVar(value="Не проверено")
-            ttk.Label(status_grid, textvariable=self.status_text_var).grid(
-                row=i, column=2, sticky='w', padx=10, pady=5)
+            # Текст статуса
+            status_text_var = tk.StringVar(value="Не проверено")
+            self.status_text_vars[name] = status_text_var
+            ttk.Label(service_frame, textvariable=status_text_var, width=20, anchor='w').pack(side='left', padx=(0, 10))
 
             # Кнопка проверки
-            ttk.Button(status_grid, text="Проверить",
-                       command=lambda n=name, k=key_var: self.check_single_connection(n, k.get())).grid(
-                row=i, column=3, padx=10, pady=5)
+            ttk.Button(service_frame, text="Проверить", width=10,
+                       command=lambda n=name, k=key_var: self.check_single_connection(n, k.get())).pack(side='left')
 
         # Кнопка проверки всех соединений
         ttk.Button(status_frame, text="Проверить все соединения",
                    command=self.check_all_connections, style="Accent.TButton").pack(pady=20)
 
-    def toggle_password_entry(self, entry):
-        """Переключение видимости пароля в Entry"""
-        current_show = entry.cget('show')
-        if current_show == '*':
-            entry.config(show='')
-        else:
-            entry.config(show='*')
+    def setup_history_tab(self):
+        """Создание вкладки с историей"""
+        self.history_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.history_tab, text="История")
 
-    def update_network_selection(self, network_name):
-        """Обновление выбора нейросети"""
-        if not self.networks_vars[network_name].get():
-            self.show_warning_message(f"Нейросеть {network_name} отключена")
+        # Панель управления историей
+        history_control = ttk.Frame(self.history_tab)
+        history_control.pack(fill='x', padx=10, pady=5)
+
+        ttk.Button(history_control, text="Обновить", command=self.load_history).pack(side='left', padx=5)
+        ttk.Button(history_control, text="Отправить в Telegram",
+                   command=self.send_selected_to_telegram).pack(side='left', padx=5)
+
+        # Список файлов
+        list_frame = ttk.Frame(self.history_tab)
+        list_frame.pack(fill='both', expand=True, padx=10, pady=5)
+
+        self.history_listbox = tk.Listbox(list_frame, selectmode='single')
+        scrollbar = ttk.Scrollbar(list_frame, command=self.history_listbox.yview)
+        self.history_listbox.configure(yscrollcommand=scrollbar.set)
+
+        self.history_listbox.pack(side='left', fill='both', expand=True)
+        scrollbar.pack(side='right', fill='y')
+
+        # Просмотр содержимого
+        view_frame = ttk.LabelFrame(self.history_tab, text="Просмотр файла", padding=10)
+        view_frame.pack(fill='both', expand=True, padx=10, pady=5)
+
+        self.history_text = tk.Text(view_frame, wrap='word')
+        history_scrollbar = ttk.Scrollbar(view_frame, command=self.history_text.yview)
+        self.history_text.configure(yscrollcommand=history_scrollbar.set)
+
+        self.history_text.pack(side='left', fill='both', expand=True)
+        history_scrollbar.pack(side='right', fill='y')
+
+        # Привязываем событие выбора
+        self.history_listbox.bind('<<ListboxSelect>>', self.on_history_select)
+
+    def load_config_to_ui(self):
+        """Загрузка конфигурации в UI"""
+        self.openai_key_var.set(self.config["api_keys"]["openai"])
+        self.anthropic_key_var.set(self.config["api_keys"]["anthropic"])
+        self.google_key_var.set(self.config["api_keys"]["google"])
+        self.yandex_key_var.set(self.config["api_keys"]["yandex"])
+        self.cohere_key_var.set(self.config["api_keys"]["cohere"])
+
+        self.telegram_token_var.set(self.config["telegram"]["bot_token"])
+        self.telegram_chat_id_var.set(self.config["telegram"]["chat_id"])
+
+        if self.config["last_directory"]:
+            self.save_path_var.set(self.config["last_directory"])
+
+    def toggle_password(self, entry):
+        """Переключение видимости пароля"""
+        current_show = entry.cget('show')
+        entry.config(show='' if current_show == '*' else '*')
 
     def update_filename_display(self, *args):
         """Обновление отображения имени файла"""
@@ -358,15 +402,30 @@ class NeuralNetworkApp:
 
         return filename
 
+    def select_file(self):
+        """Выбор файла с вопросом"""
+        filename = filedialog.askopenfilename(
+            title="Выберите файл с вопросом",
+            filetypes=[("Текстовые файлы", "*.txt"), ("Все файлы", "*.*")]
+        )
+        if filename:
+            self.file_path_var.set(filename)
+
+    def select_save_directory(self):
+        """Выбор директории для сохранения"""
+        directory = filedialog.askdirectory(title="Выберите папку для сохранения")
+        if directory:
+            self.save_path_var.set(directory)
+            self.config["last_directory"] = directory
+            self.save_config()
+
     def check_all_connections_background(self):
         """Фоновая проверка всех соединений"""
-        if hasattr(self, 'status_labels'):
-            thread = threading.Thread(target=self._check_all_connections_thread, daemon=True)
-            thread.start()
+        thread = threading.Thread(target=self._check_all_connections_thread, daemon=True)
+        thread.start()
 
     def _check_all_connections_thread(self):
         """Поток для проверки всех соединений"""
-        # Проверяем только те сервисы, для которых есть ключи
         networks_to_check = []
 
         if self.openai_key_var.get():
@@ -384,7 +443,7 @@ class NeuralNetworkApp:
 
         for name, key in networks_to_check:
             self.check_single_connection(name, key)
-            time.sleep(1)  # Задержка между проверками
+            time.sleep(1)
 
     def check_single_connection(self, network_name, api_key):
         """Проверка соединения с одной нейросетью"""
@@ -420,7 +479,7 @@ class NeuralNetworkApp:
 
     def update_status_indicator(self, network_name, status):
         """Обновление индикатора статуса"""
-        if hasattr(self, 'status_labels') and network_name in self.status_labels:
+        if network_name in self.status_labels:
             canvas = self.status_labels[network_name]
             canvas.delete("all")
 
@@ -428,10 +487,12 @@ class NeuralNetworkApp:
                 # Зеленый кружок
                 canvas.create_oval(2, 2, 18, 18, fill="green", outline="")
                 canvas.create_text(10, 10, text="✓", fill="white", font=('Arial', 10, 'bold'))
+                self.status_text_vars[network_name].set("Подключено ✓")
             else:
                 # Красный кружок
                 canvas.create_oval(2, 2, 18, 18, fill="red", outline="")
                 canvas.create_text(10, 10, text="✗", fill="white", font=('Arial', 10, 'bold'))
+                self.status_text_vars[network_name].set("Ошибка ✗")
 
     def test_openai_connection(self, api_key):
         """Тест соединения с OpenAI"""
@@ -440,10 +501,9 @@ class NeuralNetworkApp:
 
         try:
             openai.api_key = api_key
-            # Быстрый тест запроса моделей
-            response = openai.Model.list()
-            return response is not None
-        except Exception as e:
+            openai.Model.list()
+            return True
+        except:
             return False
 
     def test_anthropic_connection(self, api_key):
@@ -453,10 +513,9 @@ class NeuralNetworkApp:
 
         try:
             client = Anthropic(api_key=api_key)
-            # Быстрый тест - запрос списка моделей
-            models = client.models.list()
-            return models is not None
-        except Exception as e:
+            client.models.list()
+            return True
+        except:
             return False
 
     def test_google_connection(self, api_key):
@@ -466,9 +525,9 @@ class NeuralNetworkApp:
 
         try:
             genai.configure(api_key=api_key)
-            models = genai.list_models()
-            return models is not None
-        except Exception as e:
+            genai.list_models()
+            return True
+        except:
             return False
 
     def test_yandex_connection(self, api_key):
@@ -477,8 +536,7 @@ class NeuralNetworkApp:
             return False
 
         try:
-            # Простой тест - проверка формата ключа
-            return len(api_key) > 20  # Базовая проверка
+            return len(api_key) > 20
         except:
             return False
 
@@ -520,7 +578,6 @@ class NeuralNetworkApp:
         failed_connections = []
         successful_connections = []
 
-        # Проверяем каждое соединение
         if self.openai_key_var.get():
             if self.check_single_connection("OpenAI GPT", self.openai_key_var.get()):
                 successful_connections.append("OpenAI GPT")
@@ -557,7 +614,6 @@ class NeuralNetworkApp:
             else:
                 failed_connections.append("Telegram Bot")
 
-        # Показываем результаты
         self.show_connection_results(successful_connections, failed_connections)
 
     def show_connection_results(self, successful, failed):
@@ -580,29 +636,192 @@ class NeuralNetworkApp:
 
         messagebox.showinfo("Результаты проверки", message)
 
-    def show_warning_message(self, message):
-        """Показать предупреждающее сообщение"""
-        self.log_message(f"⚠️ {message}")
+    def log_message(self, message):
+        """Добавление сообщения в лог"""
+        self.log_text.insert('end', f"{datetime.now().strftime('%H:%M:%S')} - {message}\n")
+        self.log_text.see('end')
+        self.root.update_idletasks()
 
-    def show_error_message(self, message):
-        """Показать сообщение об ошибке"""
-        self.log_message(f"❌ {message}")
-        messagebox.showerror("Ошибка", message)
+    def clear_log(self):
+        """Очистка лога"""
+        self.log_text.delete(1.0, 'end')
 
-    def save_responses(self, responses, save_dir, original_filename):
+    def save_configuration(self):
+        """Сохранение конфигурации"""
+        self.config["api_keys"]["openai"] = self.openai_key_var.get()
+        self.config["api_keys"]["anthropic"] = self.anthropic_key_var.get()
+        self.config["api_keys"]["google"] = self.google_key_var.get()
+        self.config["api_keys"]["yandex"] = self.yandex_key_var.get()
+        self.config["api_keys"]["cohere"] = self.cohere_key_var.get()
+
+        self.config["telegram"]["bot_token"] = self.telegram_token_var.get()
+        self.config["telegram"]["chat_id"] = self.telegram_chat_id_var.get()
+
+        if self.save_config():
+            self.log_message("Конфигурация сохранена")
+            messagebox.showinfo("Успех", "Конфигурация успешно сохранена!")
+        else:
+            messagebox.showerror("Ошибка", "Не удалось сохранить конфигурацию")
+
+    def read_question_file(self, filepath):
+        """Чтение вопроса из файла"""
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                return f.read().strip()
+        except Exception as e:
+            self.log_message(f"Ошибка чтения файла: {str(e)}")
+            return None
+
+    def check_internet_connection(self):
+        """Проверка интернет-соединения"""
+        try:
+            socket.create_connection(("8.8.8.8", 53), timeout=3)
+            return True
+        except OSError:
+            return False
+
+    def query_openai(self, question, api_key):
+        """Запрос к OpenAI GPT"""
+        try:
+            if not self.check_internet_connection():
+                return "Ошибка: Нет интернет-соединения"
+
+            openai.api_key = api_key
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "Вы - полезный ассистент."},
+                    {"role": "user", "content": question}
+                ],
+                max_tokens=1000,
+                temperature=0.7
+            )
+            return response.choices[0].message.content
+        except openai.error.AuthenticationError:
+            return "Ошибка: Неверный API ключ"
+        except openai.error.RateLimitError:
+            return "Ошибка: Превышен лимит запросов"
+        except openai.error.APIError as e:
+            return f"Ошибка API OpenAI: {str(e)}"
+        except Exception as e:
+            return f"Ошибка OpenAI: {str(e)}"
+
+    def query_anthropic(self, question, api_key):
+        """Запрос к Anthropic Claude"""
+        try:
+            if not self.check_internet_connection():
+                return "Ошибка: Нет интернет-соединения"
+
+            client = Anthropic(api_key=api_key)
+            response = client.messages.create(
+                model="claude-3-haiku-20240307",
+                max_tokens=1000,
+                messages=[{"role": "user", "content": question}]
+            )
+            return response.content[0].text
+        except Exception as e:
+            if "401" in str(e):
+                return "Ошибка: Неверный API ключ"
+            elif "429" in str(e):
+                return "Ошибка: Превышен лимит запросов"
+            else:
+                return f"Ошибка Anthropic: {str(e)}"
+
+    def query_deepseek(self, question, api_key):
+        """Запрос к DeepSeek"""
+        try:
+            if not self.check_internet_connection():
+                return "Ошибка: Нет интернет-соединения"
+
+            client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.deepseek.com"
+            )
+
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "Вы - полезный ассистент."},
+                    {"role": "user", "content": question}
+                ],
+                max_tokens=1000,
+                temperature=0.7,
+                stream=False
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            return f"Ошибка DeepSeek: {str(e)}"
+
+    def query_yandex(self, question, api_key):
+        """Запрос к YandexGPT"""
+        try:
+            if not self.check_internet_connection():
+                return "Ошибка: Нет интернет-соединения"
+
+            url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
+            headers = {
+                "Authorization": f"Api-Key {api_key}",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "modelUri": f"gpt://{api_key.split('-')[0]}/yandexgpt/latest",
+                "completionOptions": {
+                    "stream": False,
+                    "temperature": 0.6,
+                    "maxTokens": 1000
+                },
+                "messages": [
+                    {"role": "user", "text": question}
+                ]
+            }
+            response = requests.post(url, headers=headers, json=data, timeout=30)
+            if response.status_code == 200:
+                return response.json()["result"]["alternatives"][0]["message"]["text"]
+            elif response.status_code == 401:
+                return "Ошибка: Неверный API ключ"
+            else:
+                return f"Ошибка YandexGPT: {response.status_code}"
+        except Exception as e:
+            return f"Ошибка YandexGPT: {str(e)}"
+
+    def query_cohere(self, question, api_key):
+        """Запрос к Cohere"""
+        try:
+            if not self.check_internet_connection():
+                return "Ошибка: Нет интернет-соединения"
+
+            url = "https://api.cohere.ai/v1/generate"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "model": "command",
+                "prompt": question,
+                "max_tokens": 1000,
+                "temperature": 0.7
+            }
+            response = requests.post(url, headers=headers, json=data, timeout=30)
+            if response.status_code == 200:
+                return response.json()["generations"][0]["text"]
+            elif response.status_code == 401:
+                return "Ошибка: Неверный API ключ"
+            else:
+                return f"Ошибка Cohere: {response.status_code}"
+        except Exception as e:
+            return f"Ошибка Cohere: {str(e)}"
+
+    def save_responses(self, responses, save_dir, original_file):
         """Сохранение ответов в файл с уникальным именем"""
         try:
-            # Получаем базовое имя исходного файла
-            base_name = os.path.splitext(os.path.basename(original_filename))[0]
-
-            # Генерируем уникальное имя файла
+            base_name = os.path.splitext(os.path.basename(original_file))[0]
             filename = self.generate_unique_filename(save_dir, base_name)
             filepath = os.path.join(save_dir, filename)
 
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write("=" * 60 + "\n")
                 f.write(f"Вопрос отправлен: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write(f"Исходный файл: {original_filename}\n")
+                f.write(f"Исходный файл: {original_file}\n")
                 f.write("=" * 60 + "\n\n")
 
                 for network, response in responses.items():
@@ -613,36 +832,56 @@ class NeuralNetworkApp:
             self.log_message(f"✅ Ответы сохранены в: {filepath}")
             return filepath
         except Exception as e:
-            self.show_error_message(f"Ошибка сохранения: {str(e)}")
+            self.log_message(f"❌ Ошибка сохранения: {str(e)}")
             return None
 
+    def send_to_telegram(self, filepath, bot_token, chat_id):
+        """Отправка файла в Telegram"""
+        try:
+            url = f"https://api.telegram.org/bot{bot_token}/sendDocument"
+
+            with open(filepath, 'rb') as file:
+                files = {'document': file}
+                data = {'chat_id': chat_id}
+                response = requests.post(url, files=files, data=data)
+
+            if response.status_code == 200:
+                self.log_message("✅ Файл успешно отправлен в Telegram")
+                return True
+            else:
+                self.log_message(f"❌ Ошибка отправки в Telegram: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_message(f"❌ Ошибка отправки в Telegram: {str(e)}")
+            return False
+
     def send_requests(self):
-        """Основная функция отправки запросов с проверкой соединения"""
+        """Основная функция отправки запросов"""
         # Проверка входных данных
         question_file = self.file_path_var.get()
         save_dir = self.save_path_var.get()
 
         if not question_file or not os.path.exists(question_file):
-            self.show_error_message("Выберите файл с вопросом")
+            messagebox.showerror("Ошибка", "Выберите файл с вопросом")
             return
 
         if not save_dir or not os.path.exists(save_dir):
-            self.show_error_message("Выберите папку для сохранения")
+            messagebox.showerror("Ошибка", "Выберите папку для сохранения")
             return
 
         # Чтение вопроса
         question = self.read_question_file(question_file)
         if not question:
-            self.show_error_message("Не удалось прочитать вопрос из файла")
+            messagebox.showerror("Ошибка", "Не удалось прочитать вопрос из файла")
             return
 
         # Проверка выбранных нейросетей
         selected_networks = [name for name, var in self.networks_vars.items() if var.get()]
         if not selected_networks:
-            self.show_error_message("Выберите хотя бы одну нейросеть")
+            messagebox.showerror("Ошибка", "Выберите хотя бы одну нейросеть")
             return
 
-        # Проверка API ключей
+        # Получение API ключей
         api_keys = {
             "OpenAI GPT": self.openai_key_var.get(),
             "Anthropic Claude": self.anthropic_key_var.get(),
@@ -651,14 +890,14 @@ class NeuralNetworkApp:
             "Cohere": self.cohere_key_var.get()
         }
 
-        # Проверяем ключи для выбранных сетей
+        # Проверка ключей для выбранных сетей
         missing_keys = []
         for network in selected_networks:
             if not api_keys[network]:
                 missing_keys.append(network)
 
         if missing_keys:
-            self.show_error_message(f"Введите API ключи для: {', '.join(missing_keys)}")
+            messagebox.showerror("Ошибка", f"Введите API ключи для: {', '.join(missing_keys)}")
             return
 
         # Проверяем соединение перед отправкой
@@ -712,7 +951,7 @@ class NeuralNetworkApp:
                     response = "Неподдерживаемая нейросеть"
 
                 # Проверяем, не вернулась ли ошибка
-                if response and response.startswith("Ошибка"):
+                if response and (response.startswith("Ошибка") or response.startswith("Error")):
                     self.log_message(f"❌ {response}")
                     failed_networks.append(network)
                 else:
@@ -773,145 +1012,65 @@ class NeuralNetworkApp:
                 f"3. Доступность сервисов"
             )
 
-    def query_openai(self, question, api_key):
-        """Запрос к OpenAI GPT с обработкой ошибок"""
-        try:
-            # Проверяем интернет-соединение
-            if not self.check_internet_connection():
-                return "Ошибка: Нет интернет-соединения"
+    def load_history(self):
+        """Загрузка истории файлов"""
+        save_dir = self.save_path_var.get()
+        if not save_dir or not os.path.exists(save_dir):
+            return
 
-            openai.api_key = api_key
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "Вы - полезный ассистент."},
-                    {"role": "user", "content": question}
-                ],
-                max_tokens=1000,
-                temperature=0.7,
-                timeout=30  # Таймаут 30 секунд
-            )
-            return response.choices[0].message.content
-        except openai.error.AuthenticationError:
-            return "Ошибка: Неверный API ключ"
-        except openai.error.RateLimitError:
-            return "Ошибка: Превышен лимит запросов"
-        except openai.error.APIError as e:
-            return f"Ошибка API OpenAI: {str(e)}"
-        except openai.error.Timeout:
-            return "Ошибка: Таймаут запроса"
+        self.history_listbox.delete(0, 'end')
+
+        try:
+            files = [f for f in os.listdir(save_dir) if f.startswith('responses_') or f.endswith('_answer.txt')]
+            files.sort(reverse=True)  # Сначала новые
+
+            for file in files:
+                self.history_listbox.insert('end', file)
         except Exception as e:
-            return f"Ошибка OpenAI: {str(e)}"
+            self.log_message(f"Ошибка загрузки истории: {str(e)}")
 
-    def query_anthropic(self, question, api_key):
-        """Запрос к Anthropic Claude с обработкой ошибок"""
+    def on_history_select(self, event):
+        """Обработка выбора файла из истории"""
+        selection = self.history_listbox.curselection()
+        if not selection:
+            return
+
+        filename = self.history_listbox.get(selection[0])
+        save_dir = self.save_path_var.get()
+        filepath = os.path.join(save_dir, filename)
+
         try:
-            if not self.check_internet_connection():
-                return "Ошибка: Нет интернет-соединения"
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
 
-            client = Anthropic(api_key=api_key)
-            response = client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=1000,
-                messages=[{"role": "user", "content": question}],
-                timeout=30
-            )
-            return response.content[0].text
+            self.history_text.delete(1.0, 'end')
+            self.history_text.insert(1.0, content)
         except Exception as e:
-            if "401" in str(e):
-                return "Ошибка: Неверный API ключ"
-            elif "429" in str(e):
-                return "Ошибка: Превышен лимит запросов"
-            else:
-                return f"Ошибка Anthropic: {str(e)}"
+            self.history_text.delete(1.0, 'end')
+            self.history_text.insert(1.0, f"Ошибка чтения файла: {str(e)}")
 
-    def query_google(self, question, api_key):
-        """Запрос к Google Gemini с обработкой ошибок"""
-        try:
-            if not self.check_internet_connection():
-                return "Ошибка: Нет интернет-соединения"
+    def send_selected_to_telegram(self):
+        """Отправка выбранного файла в Telegram"""
+        selection = self.history_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("Внимание", "Выберите файл из истории")
+            return
 
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-pro')
-            response = model.generate_content(question)
-            return response.text
-        except Exception as e:
-            if "API_KEY_INVALID" in str(e):
-                return "Ошибка: Неверный API ключ"
-            else:
-                return f"Ошибка Google Gemini: {str(e)}"
+        bot_token = self.telegram_token_var.get()
+        chat_id = self.telegram_chat_id_var.get()
 
-    def query_yandex(self, question, api_key):
-        """Запрос к YandexGPT с обработкой ошибок"""
-        try:
-            if not self.check_internet_connection():
-                return "Ошибка: Нет интернет-соединения"
+        if not bot_token or not chat_id:
+            messagebox.showerror("Ошибка", "Настройте Telegram API в настройках")
+            return
 
-            url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
-            headers = {
-                "Authorization": f"Api-Key {api_key}",
-                "Content-Type": "application/json"
-            }
-            data = {
-                "modelUri": f"gpt://{api_key.split('-')[0]}/yandexgpt/latest",
-                "completionOptions": {
-                    "stream": False,
-                    "temperature": 0.6,
-                    "maxTokens": 1000
-                },
-                "messages": [
-                    {"role": "user", "text": question}
-                ]
-            }
-            response = requests.post(url, headers=headers, json=data, timeout=30)
-            if response.status_code == 200:
-                return response.json()["result"]["alternatives"][0]["message"]["text"]
-            elif response.status_code == 401:
-                return "Ошибка: Неверный API ключ"
-            else:
-                return f"Ошибка YandexGPT: {response.status_code}"
-        except requests.exceptions.Timeout:
-            return "Ошибка: Таймаут запроса"
-        except Exception as e:
-            return f"Ошибка YandexGPT: {str(e)}"
+        filename = self.history_listbox.get(selection[0])
+        save_dir = self.save_path_var.get()
+        filepath = os.path.join(save_dir, filename)
 
-    def query_cohere(self, question, api_key):
-        """Запрос к Cohere с обработкой ошибок"""
-        try:
-            if not self.check_internet_connection():
-                return "Ошибка: Нет интернет-соединения"
-
-            url = "https://api.cohere.ai/v1/generate"
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
-            data = {
-                "model": "command",
-                "prompt": question,
-                "max_tokens": 1000,
-                "temperature": 0.7
-            }
-            response = requests.post(url, headers=headers, json=data, timeout=30)
-            if response.status_code == 200:
-                return response.json()["generations"][0]["text"]
-            elif response.status_code == 401:
-                return "Ошибка: Неверный API ключ"
-            else:
-                return f"Ошибка Cohere: {response.status_code}"
-        except requests.exceptions.Timeout:
-            return "Ошибка: Таймаут запроса"
-        except Exception as e:
-            return f"Ошибка Cohere: {str(e)}"
-
-    def check_internet_connection(self, host="8.8.8.8", port=53, timeout=3):
-        """Проверка интернет-соединения"""
-        try:
-            socket.setdefaulttimeout(timeout)
-            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
-            return True
-        except socket.error:
-            return False
+        if self.send_to_telegram(filepath, bot_token, chat_id):
+            messagebox.showinfo("Успех", "Файл отправлен в Telegram")
+        else:
+            messagebox.showerror("Ошибка", "Не удалось отправить файл")
 
 
 def main():
