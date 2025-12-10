@@ -172,7 +172,7 @@ class NeuralNetworkApp:
         self.progress.pack(fill='x', padx=10, pady=5)
 
         log_frame = ttk.LabelFrame(self.main_tab, text="Лог выполнения", padding=10)
-        log_frame.pack(fill='both', expand=True, padx=10, pady=5)
+        log_frame.pack(fill='both', expand=True, padx=10, pady=20)
 
         self.log_text = tk.Text(log_frame, height=10, wrap='word')
         scrollbar = ttk.Scrollbar(log_frame, command=self.log_text.yview)
