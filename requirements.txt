@@ -1,4 +1,3 @@
 openai>=1.3.0
 anthropic>=0.7.0
 requests>=2.31.0
-google-generativeai>=0.3.0  # Оставлено для совместимости

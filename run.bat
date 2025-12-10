@@ -1,9 +1,9 @@
 @echo off
-echo Запуск приложения менеджера нейросетей v3.0
-echo Поддержка: OpenAI GPT, Anthropic Claude, DeepSeek
+echo Запуск менеджера нейросетей v5.0
+echo БЕСПЛАТНЫЕ нейросети: Groq, OpenRouter, Hugging Face
 echo.
 
-REM Активация виртуального окружения
+REM Активация окружения
 call venv\Scripts\activate.bat
 
 REM Запуск приложения

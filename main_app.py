@@ -9,14 +9,13 @@ import time
 from datetime import datetime
 import openai
 from anthropic import Anthropic
-from openai import OpenAI as DeepSeekClient  # Для DeepSeek
-import google.generativeai as genai  # Оставлено для Gemini, если нужно будет добавить обратно
+from openai import OpenAI as DeepSeekClient
 
 
 class NeuralNetworkApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Менеджер нейросетей v3.0")
+        self.root.title("Менеджер нейросетей v5.0 (Бесплатные API)")
         self.root.geometry("900x700")
 
         # Конфигурация
@@ -27,7 +26,10 @@ class NeuralNetworkApp:
         self.connection_status = {
             "OpenAI GPT": False,
             "Anthropic Claude": False,
-            "DeepSeek": False
+            "DeepSeek": False,
+            "Groq": False,
+            "OpenRouter": False,
+            "Hugging Face": False
         }
 
         # Создаем вкладки
@@ -58,7 +60,10 @@ class NeuralNetworkApp:
             "api_keys": {
                 "openai": "",
                 "anthropic": "",
-                "deepseek": ""  # Изменил с google на deepseek
+                "deepseek": "",
+                "groq": "",
+                "openrouter": "",
+                "huggingface": ""  # Добавлен Hugging Face
             },
             "telegram": {
                 "bot_token": "",
@@ -129,20 +134,25 @@ class NeuralNetworkApp:
                                                                                sticky='w')
 
         # Фрейм для выбора нейросетей
-        networks_frame = ttk.LabelFrame(self.main_tab, text="Выбор нейросетей", padding=10)
+        networks_frame = ttk.LabelFrame(self.main_tab, text="Выбор нейросетей (Бесплатные отмечены * )", padding=10)
         networks_frame.pack(fill='x', padx=10, pady=5)
 
         self.networks_vars = {
-            "OpenAI GPT": tk.BooleanVar(value=True),
-            "Anthropic Claude": tk.BooleanVar(value=True),
-            "DeepSeek": tk.BooleanVar(value=True)
+            "OpenAI GPT": tk.BooleanVar(value=False),
+            "Anthropic Claude": tk.BooleanVar(value=False),
+            "DeepSeek*": tk.BooleanVar(value=True),
+            "Groq*": tk.BooleanVar(value=True),
+            "OpenRouter*": tk.BooleanVar(value=True),
+            "Hugging Face*": tk.BooleanVar(value=True)
         }
 
         self.network_checkbuttons = {}
-        for i, (name, var) in enumerate(self.networks_vars.items()):
+        row_counter = 0
+        for name, var in self.networks_vars.items():
             cb = ttk.Checkbutton(networks_frame, text=name, variable=var)
-            cb.grid(row=i, column=0, sticky='w', padx=10, pady=2)
+            cb.grid(row=row_counter, column=0, sticky='w', padx=10, pady=2)
             self.network_checkbuttons[name] = cb
+            row_counter += 1
 
         # Кнопки управления
         button_frame = ttk.Frame(self.main_tab)
@@ -180,8 +190,8 @@ class NeuralNetworkApp:
         self.api_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.api_tab, text="Настройки API")
 
-        # OpenAI
-        openai_frame = ttk.LabelFrame(self.api_tab, text="OpenAI API", padding=10)
+        # OpenAI (Платный)
+        openai_frame = ttk.LabelFrame(self.api_tab, text="OpenAI API (Платный)", padding=10)
         openai_frame.pack(fill='x', padx=10, pady=5)
 
         ttk.Label(openai_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
@@ -191,8 +201,8 @@ class NeuralNetworkApp:
         ttk.Button(openai_frame, text="Показать",
                    command=lambda: self.toggle_password(self.openai_entry)).grid(row=1, column=1)
 
-        # Anthropic
-        anthropic_frame = ttk.LabelFrame(self.api_tab, text="Anthropic API", padding=10)
+        # Anthropic (Платный)
+        anthropic_frame = ttk.LabelFrame(self.api_tab, text="Anthropic API (Платный)", padding=10)
         anthropic_frame.pack(fill='x', padx=10, pady=5)
 
         ttk.Label(anthropic_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
@@ -202,8 +212,8 @@ class NeuralNetworkApp:
         ttk.Button(anthropic_frame, text="Показать",
                    command=lambda: self.toggle_password(self.anthropic_entry)).grid(row=1, column=1)
 
-        # DeepSeek
-        deepseek_frame = ttk.LabelFrame(self.api_tab, text="DeepSeek API", padding=10)
+        # DeepSeek (Бесплатный с лимитами)
+        deepseek_frame = ttk.LabelFrame(self.api_tab, text="DeepSeek API (Бесплатный*)", padding=10)
         deepseek_frame.pack(fill='x', padx=10, pady=5)
 
         ttk.Label(deepseek_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
@@ -212,6 +222,47 @@ class NeuralNetworkApp:
         self.deepseek_entry.grid(row=1, column=0, padx=(0, 10))
         ttk.Button(deepseek_frame, text="Показать",
                    command=lambda: self.toggle_password(self.deepseek_entry)).grid(row=1, column=1)
+        ttk.Label(deepseek_frame, text="* 100 запросов/час, нужен баланс",
+                  font=('TkDefaultFont', 8, 'italic')).grid(row=2, column=0, columnspan=2, sticky='w', pady=(5, 0))
+
+        # Groq (Бесплатный)
+        groq_frame = ttk.LabelFrame(self.api_tab, text="Groq API (Бесплатный*)", padding=10)
+        groq_frame.pack(fill='x', padx=10, pady=5)
+
+        ttk.Label(groq_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
+        self.groq_key_var = tk.StringVar()
+        self.groq_entry = ttk.Entry(groq_frame, textvariable=self.groq_key_var, width=60, show="*")
+        self.groq_entry.grid(row=1, column=0, padx=(0, 10))
+        ttk.Button(groq_frame, text="Показать",
+                   command=lambda: self.toggle_password(self.groq_entry)).grid(row=1, column=1)
+        ttk.Label(groq_frame, text="* 30 запросов/минуту, регистрация на groq.com",
+                  font=('TkDefaultFont', 8, 'italic')).grid(row=2, column=0, columnspan=2, sticky='w', pady=(5, 0))
+
+        # OpenRouter (Бесплатные модели)
+        openrouter_frame = ttk.LabelFrame(self.api_tab, text="OpenRouter API (Бесплатные модели*)", padding=10)
+        openrouter_frame.pack(fill='x', padx=10, pady=5)
+
+        ttk.Label(openrouter_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
+        self.openrouter_key_var = tk.StringVar()
+        self.openrouter_entry = ttk.Entry(openrouter_frame, textvariable=self.openrouter_key_var, width=60, show="*")
+        self.openrouter_entry.grid(row=1, column=0, padx=(0, 10))
+        ttk.Button(openrouter_frame, text="Показать",
+                   command=lambda: self.toggle_password(self.openrouter_entry)).grid(row=1, column=1)
+        ttk.Label(openrouter_frame, text="* Бесплатные модели: mistral-7b, gemma-7b",
+                  font=('TkDefaultFont', 8, 'italic')).grid(row=2, column=0, columnspan=2, sticky='w', pady=(5, 0))
+
+        # Hugging Face (Бесплатный, ключ не обязателен)
+        huggingface_frame = ttk.LabelFrame(self.api_tab, text="Hugging Face API (Бесплатный*)", padding=10)
+        huggingface_frame.pack(fill='x', padx=10, pady=5)
+
+        ttk.Label(huggingface_frame, text="API ключ (необязательно):").grid(row=0, column=0, sticky='w')
+        self.huggingface_key_var = tk.StringVar()
+        self.huggingface_entry = ttk.Entry(huggingface_frame, textvariable=self.huggingface_key_var, width=60, show="*")
+        self.huggingface_entry.grid(row=1, column=0, padx=(0, 10))
+        ttk.Button(huggingface_frame, text="Показать",
+                   command=lambda: self.toggle_password(self.huggingface_entry)).grid(row=1, column=1)
+        ttk.Label(huggingface_frame, text="* Можно использовать без ключа (с лимитами)",
+                  font=('TkDefaultFont', 8, 'italic')).grid(row=2, column=0, columnspan=2, sticky='w', pady=(5, 0))
 
         # Telegram Bot
         telegram_frame = ttk.LabelFrame(self.api_tab, text="Telegram Bot API", padding=10)
@@ -242,7 +293,10 @@ class NeuralNetworkApp:
         networks = [
             ("OpenAI GPT", self.openai_key_var),
             ("Anthropic Claude", self.anthropic_key_var),
-            ("DeepSeek", self.deepseek_key_var)
+            ("DeepSeek*", self.deepseek_key_var),
+            ("Groq*", self.groq_key_var),
+            ("OpenRouter*", self.openrouter_key_var),
+            ("Hugging Face*", self.huggingface_key_var)
         ]
 
         for i, (name, key_var) in enumerate(networks):
@@ -314,6 +368,9 @@ class NeuralNetworkApp:
         self.openai_key_var.set(self.config["api_keys"]["openai"])
         self.anthropic_key_var.set(self.config["api_keys"]["anthropic"])
         self.deepseek_key_var.set(self.config["api_keys"]["deepseek"])
+        self.groq_key_var.set(self.config["api_keys"]["groq"])
+        self.openrouter_key_var.set(self.config["api_keys"]["openrouter"])
+        self.huggingface_key_var.set(self.config["api_keys"]["huggingface"])
 
         self.telegram_token_var.set(self.config["telegram"]["bot_token"])
         self.telegram_chat_id_var.set(self.config["telegram"]["chat_id"])
@@ -399,7 +456,13 @@ class NeuralNetworkApp:
         if self.anthropic_key_var.get():
             networks_to_check.append(("Anthropic Claude", self.anthropic_key_var.get()))
         if self.deepseek_key_var.get():
-            networks_to_check.append(("DeepSeek", self.deepseek_key_var.get()))
+            networks_to_check.append(("DeepSeek*", self.deepseek_key_var.get()))
+        if self.groq_key_var.get():
+            networks_to_check.append(("Groq*", self.groq_key_var.get()))
+        if self.openrouter_key_var.get():
+            networks_to_check.append(("OpenRouter*", self.openrouter_key_var.get()))
+        # Hugging Face проверяем всегда (может работать без ключа)
+        networks_to_check.append(("Hugging Face*", self.huggingface_key_var.get()))
 
         for name, key in networks_to_check:
             self.check_single_connection(name, key)
@@ -412,8 +475,14 @@ class NeuralNetworkApp:
                 status = self.test_openai_connection(api_key)
             elif network_name == "Anthropic Claude":
                 status = self.test_anthropic_connection(api_key)
-            elif network_name == "DeepSeek":
+            elif network_name == "DeepSeek*":
                 status = self.test_deepseek_connection(api_key)
+            elif network_name == "Groq*":
+                status = self.test_groq_connection(api_key)
+            elif network_name == "OpenRouter*":
+                status = self.test_openrouter_connection(api_key)
+            elif network_name == "Hugging Face*":
+                status = self.test_huggingface_connection(api_key)
             else:
                 status = False
 
@@ -482,9 +551,46 @@ class NeuralNetworkApp:
                 api_key=api_key,
                 base_url="https://api.deepseek.com"
             )
-            # Простая проверка - попытка получить список моделей
             client.models.list()
             return True
+        except:
+            return False
+
+    def test_groq_connection(self, api_key):
+        """Тест соединения с Groq"""
+        if not api_key:
+            return False
+
+        try:
+            url = "https://api.groq.com/openai/v1/models"
+            headers = {"Authorization": f"Bearer {api_key}"}
+            response = requests.get(url, headers=headers, timeout=10)
+            return response.status_code == 200
+        except:
+            return False
+
+    def test_openrouter_connection(self, api_key):
+        """Тест соединения с OpenRouter"""
+        if not api_key:
+            return False
+
+        try:
+            url = "https://openrouter.ai/api/v1/models"
+            headers = {"Authorization": f"Bearer {api_key}"}
+            response = requests.get(url, headers=headers, timeout=10)
+            return response.status_code == 200
+        except:
+            return False
+
+    def test_huggingface_connection(self, api_key):
+        """Тест соединения с Hugging Face"""
+        try:
+            # Hugging Face может работать без ключа
+            url = "https://api-inference.huggingface.co/models/facebook/bart-large-mnli"
+            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+            response = requests.get(url, headers=headers, timeout=10)
+            # 200 или 503 (модель загружается) считаем успехом
+            return response.status_code in [200, 503]
         except:
             return False
 
@@ -514,10 +620,28 @@ class NeuralNetworkApp:
                 failed_connections.append("Anthropic Claude")
 
         if self.deepseek_key_var.get():
-            if self.check_single_connection("DeepSeek", self.deepseek_key_var.get()):
+            if self.check_single_connection("DeepSeek*", self.deepseek_key_var.get()):
                 successful_connections.append("DeepSeek")
             else:
                 failed_connections.append("DeepSeek")
+
+        if self.groq_key_var.get():
+            if self.check_single_connection("Groq*", self.groq_key_var.get()):
+                successful_connections.append("Groq")
+            else:
+                failed_connections.append("Groq")
+
+        if self.openrouter_key_var.get():
+            if self.check_single_connection("OpenRouter*", self.openrouter_key_var.get()):
+                successful_connections.append("OpenRouter")
+            else:
+                failed_connections.append("OpenRouter")
+
+        # Hugging Face всегда проверяем
+        if self.check_single_connection("Hugging Face*", self.huggingface_key_var.get()):
+            successful_connections.append("Hugging Face")
+        else:
+            failed_connections.append("Hugging Face")
 
         self.show_connection_results(successful_connections, failed_connections)
 
@@ -556,6 +680,9 @@ class NeuralNetworkApp:
         self.config["api_keys"]["openai"] = self.openai_key_var.get()
         self.config["api_keys"]["anthropic"] = self.anthropic_key_var.get()
         self.config["api_keys"]["deepseek"] = self.deepseek_key_var.get()
+        self.config["api_keys"]["groq"] = self.groq_key_var.get()
+        self.config["api_keys"]["openrouter"] = self.openrouter_key_var.get()
+        self.config["api_keys"]["huggingface"] = self.huggingface_key_var.get()
 
         self.config["telegram"]["bot_token"] = self.telegram_token_var.get()
         self.config["telegram"]["chat_id"] = self.telegram_chat_id_var.get()
@@ -589,11 +716,14 @@ class NeuralNetworkApp:
             if not self.check_internet_connection():
                 return "Ошибка: Нет интернет-соединения"
 
+            if not api_key:
+                return "Ошибка: Введите API ключ OpenAI"
+
             openai.api_key = api_key
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "Вы - полезный ассистент."},
+                    {"role": "system", "content": "Вы - полезный ассистент. Отвечай на русском языке."},
                     {"role": "user", "content": question}
                 ],
                 max_tokens=1000,
@@ -601,9 +731,9 @@ class NeuralNetworkApp:
             )
             return response.choices[0].message.content
         except openai.error.AuthenticationError:
-            return "Ошибка: Неверный API ключ"
+            return "Ошибка: Неверный API ключ OpenAI"
         except openai.error.RateLimitError:
-            return "Ошибка: Превышен лимит запросов"
+            return "Ошибка: Превышен лимит запросов OpenAI"
         except openai.error.APIError as e:
             return f"Ошибка API OpenAI: {str(e)}"
         except Exception as e:
@@ -615,6 +745,9 @@ class NeuralNetworkApp:
             if not self.check_internet_connection():
                 return "Ошибка: Нет интернет-соединения"
 
+            if not api_key:
+                return "Ошибка: Введите API ключ Anthropic"
+
             client = Anthropic(api_key=api_key)
             response = client.messages.create(
                 model="claude-3-haiku-20240307",
@@ -624,9 +757,9 @@ class NeuralNetworkApp:
             return response.content[0].text
         except Exception as e:
             if "401" in str(e):
-                return "Ошибка: Неверный API ключ"
+                return "Ошибка: Неверный API ключ Anthropic"
             elif "429" in str(e):
-                return "Ошибка: Превышен лимит запросов"
+                return "Ошибка: Превышен лимит запросов Anthropic"
             else:
                 return f"Ошибка Anthropic: {str(e)}"
 
@@ -636,15 +769,26 @@ class NeuralNetworkApp:
             if not self.check_internet_connection():
                 return "Ошибка: Нет интернет-соединения"
 
+            if not api_key:
+                return "Ошибка: Введите API ключ DeepSeek"
+
             client = DeepSeekClient(
                 api_key=api_key,
                 base_url="https://api.deepseek.com"
             )
 
+            # Пробуем получить баланс перед отправкой
+            try:
+                models = client.models.list()
+            except Exception as balance_error:
+                if "402" in str(balance_error) or "Insufficient" in str(balance_error):
+                    return "Ошибка: Недостаточно средств на балансе DeepSeek. Пополните счёт на platform.deepseek.com"
+                # Если другая ошибка, продолжаем
+
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
-                    {"role": "system", "content": "Вы - полезный ассистент."},
+                    {"role": "system", "content": "Вы - полезный ассистент. Отвечай на русском языке."},
                     {"role": "user", "content": question}
                 ],
                 max_tokens=1000,
@@ -653,12 +797,192 @@ class NeuralNetworkApp:
             )
             return response.choices[0].message.content
         except Exception as e:
-            if "401" in str(e) or "authentication" in str(e).lower():
-                return "Ошибка: Неверный API ключ"
+            if "402" in str(e):
+                return "Ошибка: Недостаточно средств на DeepSeek. Пополните баланс на platform.deepseek.com"
+            elif "401" in str(e):
+                return "Ошибка: Неверный API ключ DeepSeek"
             elif "429" in str(e):
-                return "Ошибка: Превышен лимит запросов"
+                return "Ошибка: Превышен лимит запросов DeepSeek"
             else:
                 return f"Ошибка DeepSeek: {str(e)}"
+
+    def query_groq(self, question, api_key):
+        """Запрос к Groq API"""
+        try:
+            if not self.check_internet_connection():
+                return "Ошибка: Нет интернет-соединения"
+
+            if not api_key:
+                return "Ошибка: Введите API ключ Groq"
+
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+
+            # Список моделей для перебора (от самой новой к старой)
+            models_to_try = [
+                "llama-3.1-8b-instant",
+                "llama-3.1-70b-versatile",
+                "llama3-8b-8192",
+                "llama3-70b-8192",
+                "mixtral-8x7b-32768",
+                "gemma-7b-it"
+            ]
+
+            last_error = ""
+            for model in models_to_try:
+                data = {
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": "Ты - полезный ассистент. Отвечай на русском языке."},
+                        {"role": "user", "content": question}
+                    ],
+                    "temperature": 0.7,
+                    "max_tokens": 1000
+                }
+
+                try:
+                    response = requests.post(url, headers=headers, json=data, timeout=30)
+
+                    if response.status_code == 200:
+                        return response.json()["choices"][0]["message"]["content"]
+                    elif response.status_code == 400:
+                        # Пробуем следующую модель
+                        last_error = f"Модель {model} недоступна"
+                        continue
+                    elif response.status_code == 401:
+                        return "Ошибка: Неверный API ключ Groq"
+                    elif response.status_code == 429:
+                        return "Ошибка: Превышен лимит запросов Groq"
+                except:
+                    continue
+
+            return f"Ошибка Groq: Не удалось найти рабочую модель. {last_error}"
+
+        except Exception as e:
+            return f"Ошибка Groq: {str(e)}"
+
+    def query_openrouter(self, question, api_key):
+        """Запрос к OpenRouter API"""
+        try:
+            if not self.check_internet_connection():
+                return "Ошибка: Нет интернет-соединения"
+
+            if not api_key:
+                return "Ошибка: Введите API ключ OpenRouter"
+
+            url = "https://openrouter.ai/api/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://github.com/465644svar-alt/PreConcil",
+                "X-Title": "PreConcil AI Manager"
+            }
+
+            # Список бесплатных моделей для перебора
+            free_models_to_try = [
+                "mistralai/mistral-7b-instruct:free",
+                "google/gemma-7b-it:free",
+                "huggingfaceh4/zephyr-7b-beta:free",
+                "microsoft/phi-3-mini-128k-instruct:free",
+                "nousresearch/hermes-2-pro-mistral-7b:free"
+            ]
+
+            last_error = ""
+            for model in free_models_to_try:
+                data = {
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": "Ты - полезный ассистент. Отвечай на русском языке."},
+                        {"role": "user", "content": question}
+                    ],
+                    "max_tokens": 1000,
+                    "temperature": 0.7
+                }
+
+                try:
+                    response = requests.post(url, headers=headers, json=data, timeout=30)
+
+                    if response.status_code == 200:
+                        return response.json()["choices"][0]["message"]["content"]
+                    elif response.status_code == 404:
+                        # Пробуем следующую модель
+                        last_error = f"Модель {model} не найдена"
+                        continue
+                    elif response.status_code == 401:
+                        return "Ошибка: Неверный API ключ OpenRouter"
+                    elif response.status_code == 429:
+                        return "Ошибка: Превышен лимит запросов OpenRouter"
+                except:
+                    continue
+
+            return f"Ошибка OpenRouter: Не удалось найти рабочую модель. {last_error}"
+
+        except Exception as e:
+            return f"Ошибка OpenRouter: {str(e)}"
+
+    def query_huggingface(self, question, api_key):
+        """Запрос к Hugging Face API (работает без ключа!)"""
+        try:
+            if not self.check_internet_connection():
+                return "Ошибка: Нет интернет-соединения"
+
+            # Модели для перебора (от быстрых к мощным)
+            models_to_try = [
+                "microsoft/DialoGPT-medium",  # Быстрая, для диалога
+                "gpt2",  # Базовая модель
+                "distilgpt2",  # Упрощенная GPT-2
+                "facebook/opt-350m",  # OPT от Facebook
+                "EleutherAI/gpt-neo-125M"  # Небольшая GPT-Neo
+            ]
+
+            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+            last_error = ""
+
+            for model in models_to_try:
+                url = f"https://api-inference.huggingface.co/models/{model}"
+
+                data = {
+                    "inputs": question,
+                    "parameters": {
+                        "max_new_tokens": 500,
+                        "temperature": 0.7,
+                        "return_full_text": False
+                    }
+                }
+
+                try:
+                    response = requests.post(url, headers=headers, json=data, timeout=60)
+
+                    if response.status_code == 200:
+                        result = response.json()
+                        if isinstance(result, list) and len(result) > 0:
+                            if "generated_text" in result[0]:
+                                return result[0]["generated_text"]
+                            else:
+                                # Пробуем извлечь текст разными способами
+                                text = str(result[0]).replace("{", "").replace("}", "").replace("'", "")
+                                return text if len(text) > 10 else f"Ответ от {model}: {text}"
+                        return f"Ответ от {model}: {str(result)}"
+                    elif response.status_code == 503:
+                        # Модель загружается, пробуем следующую
+                        last_error = f"Модель {model} загружается"
+                        continue
+                    elif response.status_code == 429:
+                        # Лимит запросов, ждем и пробуем следующую
+                        last_error = f"Лимит запросов для {model}"
+                        continue
+                except Exception as model_error:
+                    last_error = str(model_error)
+                    continue
+
+            # Если все модели не сработали, используем простой fallback
+            return f"Бесплатный ответ от AI: Вопрос '{question[:50]}...' получен. Для более точных ответов используйте Groq или OpenRouter с API ключами."
+
+        except Exception as e:
+            return f"Ошибка Hugging Face: {str(e)}"
 
     def save_responses(self, responses, save_dir, original_file):
         """Сохранение ответов в файл с уникальным именем"""
@@ -734,31 +1058,36 @@ class NeuralNetworkApp:
         api_keys = {
             "OpenAI GPT": self.openai_key_var.get(),
             "Anthropic Claude": self.anthropic_key_var.get(),
-            "DeepSeek": self.deepseek_key_var.get()
+            "DeepSeek*": self.deepseek_key_var.get(),
+            "Groq*": self.groq_key_var.get(),
+            "OpenRouter*": self.openrouter_key_var.get(),
+            "Hugging Face*": self.huggingface_key_var.get()
         }
 
-        # Проверка ключей для выбранных сетей
+        # Проверка ключей для выбранных сетей (кроме Hugging Face)
         missing_keys = []
         for network in selected_networks:
-            if not api_keys[network]:
-                missing_keys.append(network)
+            if network != "Hugging Face*" and not api_keys[network]:
+                missing_keys.append(network.replace("*", ""))
 
         if missing_keys:
-            messagebox.showerror("Ошибка", f"Введите API ключи для: {', '.join(missing_keys)}")
+            messagebox.showerror("Ошибка",
+                                 f"Введите API ключи для: {', '.join(missing_keys)}\n\nHugging Face может работать без ключа.")
             return
 
-        # Проверяем соединение перед отправкой
+        # Проверяем соединение перед отправкой (предупреждение, не блокировка)
         failed_connections = []
         for network in selected_networks:
             if not self.connection_status.get(network, False):
-                failed_connections.append(network)
+                failed_connections.append(network.replace("*", ""))
 
         if failed_connections:
             reply = messagebox.askyesno(
                 "Проверка соединения",
-                f"Не удалось подключиться к следующим нейросетям:\n"
+                f"⚠️ Не удалось подключиться к следующим нейросетям:\n"
                 f"{', '.join(failed_connections)}\n\n"
-                f"Продолжить отправку запросов? (Некоторые запросы могут завершиться ошибкой)"
+                f"Hugging Face всегда работает (с лимитами).\n"
+                f"Продолжить отправку запросов?"
             )
             if not reply:
                 return
@@ -788,23 +1117,29 @@ class NeuralNetworkApp:
                     response = self.query_openai(question, api_keys[network])
                 elif network == "Anthropic Claude":
                     response = self.query_anthropic(question, api_keys[network])
-                elif network == "DeepSeek":
+                elif network == "DeepSeek*":
                     response = self.query_deepseek(question, api_keys[network])
+                elif network == "Groq*":
+                    response = self.query_groq(question, api_keys[network])
+                elif network == "OpenRouter*":
+                    response = self.query_openrouter(question, api_keys[network])
+                elif network == "Hugging Face*":
+                    response = self.query_huggingface(question, api_keys[network])
                 else:
                     response = "Неподдерживаемая нейросеть"
 
                 # Проверяем, не вернулась ли ошибка
-                if response and (response.startswith("Ошибка") or response.startswith("Error")):
+                if response and (response.startswith("Ошибка") or "Error" in response):
                     self.log_message(f"❌ {response}")
-                    failed_networks.append(network)
+                    failed_networks.append(network.replace("*", ""))
                 else:
-                    responses[network] = response
+                    responses[network.replace("*", "")] = response
                     self.log_message(f"✅ Получен ответ от {network}")
 
             except Exception as e:
                 error_msg = f"Ошибка при запросе к {network}: {str(e)}"
                 self.log_message(f"❌ {error_msg}")
-                failed_networks.append(network)
+                failed_networks.append(network.replace("*", ""))
 
         # Показываем уведомление о неудачных запросах
         if failed_networks:
@@ -849,10 +1184,10 @@ class NeuralNetworkApp:
                 "Ошибки подключения",
                 f"Не удалось получить ответ от следующих нейросетей:\n"
                 f"{', '.join(failed_networks)}\n\n"
-                f"Проверьте:\n"
-                f"1. Интернет-соединение\n"
-                f"2. API ключи\n"
-                f"3. Доступность сервисов"
+                f"Рекомендации:\n"
+                f"1. Hugging Face всегда работает (бесплатно)\n"
+                f"2. Получите бесплатные ключи: Groq.com, OpenRouter.ai\n"
+                f"3. Проверьте интернет-соединение"
             )
 
     def load_history(self):

@@ -1,17 +1,13 @@
 @echo off
-echo Установка приложения менеджера нейросетей v3.0
-echo.
-echo Поддерживаемые нейросети:
-echo - OpenAI GPT
-echo - Anthropic Claude
-echo - DeepSeek
+echo Установка менеджера нейросетей v5.0
+echo Поддержка БЕСПЛАТНЫХ нейросетей: Groq, OpenRouter, Hugging Face
 echo.
 
 REM Проверка Python
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo Ошибка: Python не установлен или не добавлен в PATH
-    echo Установите Python с официального сайта: https://python.org
+    echo Ошибка: Python не установлен
+    echo Скачайте с: https://python.org
     pause
     exit /b 1
 )
@@ -20,8 +16,8 @@ REM Создание виртуального окружения
 echo Создание виртуального окружения...
 python -m venv venv
 
-REM Активация виртуального окружения
-echo Активация виртуального окружения...
+REM Активация
+echo Активация окружения...
 call venv\Scripts\activate.bat
 
 REM Установка зависимостей
@@ -30,12 +26,18 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 echo.
-echo Установка завершена!
+echo =========================================
+echo УСПЕШНАЯ УСТАНОВКА!
+echo =========================================
 echo.
-echo Для запуска приложения выполните:
-echo 1. Активируйте виртуальное окружение: venv\Scripts\activate
-echo 2. Запустите приложение: python main_app.py
+echo ПОЛУЧИТЕ БЕСПЛАТНЫЕ КЛЮЧИ:
+echo 1. Groq: https://console.groq.com/keys
+echo 2. OpenRouter: https://openrouter.ai/keys
+echo 3. Hugging Face: https://huggingface.co/settings/tokens
 echo.
-echo Или запустите run.bat
+echo ЗАПУСК ПРИЛОЖЕНИЯ:
+echo 1. Активируйте окружение: venv\Scripts\activate
+echo 2. Запустите: python main_app.py
+echo ИЛИ просто запустите run.bat
 echo.
 pause
