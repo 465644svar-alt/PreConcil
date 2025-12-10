@@ -1,12 +1,12 @@
 {
   "api_keys": {
-    "openai": "",
-    "anthropic": "",
-    "deepseek": ""
+    "openai": "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",
+    "anthropic": "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",
+    "deepseek": "sk-77b408f7576048e4a632b30ade1c1972"
   },
   "telegram": {
     "bot_token": "",
     "chat_id": ""
   },
-  "last_directory": ""
+  "last_directory": "C:/Users/moneymaker/Desktop/questions"
 }
