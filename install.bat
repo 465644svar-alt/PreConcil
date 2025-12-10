@@ -1,5 +1,10 @@
 @echo off
-echo Установка приложения менеджера нейросетей v2.0
+echo Установка приложения менеджера нейросетей v3.0
+echo.
+echo Поддерживаемые нейросети:
+echo - OpenAI GPT
+echo - Anthropic Claude
+echo - DeepSeek
 echo.
 
 REM Проверка Python
@@ -30,5 +35,7 @@ echo.
 echo Для запуска приложения выполните:
 echo 1. Активируйте виртуальное окружение: venv\Scripts\activate
 echo 2. Запустите приложение: python main_app.py
+echo.
+echo Или запустите run.bat
 echo.
 pause

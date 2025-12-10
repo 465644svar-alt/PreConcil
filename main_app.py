@@ -8,15 +8,15 @@ import socket
 import time
 from datetime import datetime
 import openai
-import google.generativeai as genai
 from anthropic import Anthropic
-from pathlib import Path
+from openai import OpenAI as DeepSeekClient  # Для DeepSeek
+import google.generativeai as genai  # Оставлено для Gemini, если нужно будет добавить обратно
 
 
 class NeuralNetworkApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Менеджер нейросетей v2.0")
+        self.root.title("Менеджер нейросетей v3.0")
         self.root.geometry("900x700")
 
         # Конфигурация
@@ -27,10 +27,7 @@ class NeuralNetworkApp:
         self.connection_status = {
             "OpenAI GPT": False,
             "Anthropic Claude": False,
-            "Google Gemini": False,
-            "YandexGPT": False,
-            "Cohere": False,
-            "Telegram": False
+            "DeepSeek": False
         }
 
         # Создаем вкладки
@@ -61,9 +58,7 @@ class NeuralNetworkApp:
             "api_keys": {
                 "openai": "",
                 "anthropic": "",
-                "google": "",
-                "yandex": "",
-                "cohere": ""
+                "deepseek": ""  # Изменил с google на deepseek
             },
             "telegram": {
                 "bot_token": "",
@@ -140,15 +135,13 @@ class NeuralNetworkApp:
         self.networks_vars = {
             "OpenAI GPT": tk.BooleanVar(value=True),
             "Anthropic Claude": tk.BooleanVar(value=True),
-            "Google Gemini": tk.BooleanVar(value=True),
-            "YandexGPT": tk.BooleanVar(value=False),
-            "Cohere": tk.BooleanVar(value=False)
+            "DeepSeek": tk.BooleanVar(value=True)
         }
 
         self.network_checkbuttons = {}
         for i, (name, var) in enumerate(self.networks_vars.items()):
             cb = ttk.Checkbutton(networks_frame, text=name, variable=var)
-            cb.grid(row=i // 2, column=i % 2, sticky='w', padx=10, pady=2)
+            cb.grid(row=i, column=0, sticky='w', padx=10, pady=2)
             self.network_checkbuttons[name] = cb
 
         # Кнопки управления
@@ -209,38 +202,16 @@ class NeuralNetworkApp:
         ttk.Button(anthropic_frame, text="Показать",
                    command=lambda: self.toggle_password(self.anthropic_entry)).grid(row=1, column=1)
 
-        # Google AI
-        google_frame = ttk.LabelFrame(self.api_tab, text="Google AI API", padding=10)
-        google_frame.pack(fill='x', padx=10, pady=5)
+        # DeepSeek
+        deepseek_frame = ttk.LabelFrame(self.api_tab, text="DeepSeek API", padding=10)
+        deepseek_frame.pack(fill='x', padx=10, pady=5)
 
-        ttk.Label(google_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
-        self.google_key_var = tk.StringVar()
-        self.google_entry = ttk.Entry(google_frame, textvariable=self.google_key_var, width=60, show="*")
-        self.google_entry.grid(row=1, column=0, padx=(0, 10))
-        ttk.Button(google_frame, text="Показать",
-                   command=lambda: self.toggle_password(self.google_entry)).grid(row=1, column=1)
-
-        # YandexGPT
-        yandex_frame = ttk.LabelFrame(self.api_tab, text="YandexGPT API", padding=10)
-        yandex_frame.pack(fill='x', padx=10, pady=5)
-
-        ttk.Label(yandex_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
-        self.yandex_key_var = tk.StringVar()
-        self.yandex_entry = ttk.Entry(yandex_frame, textvariable=self.yandex_key_var, width=60, show="*")
-        self.yandex_entry.grid(row=1, column=0, padx=(0, 10))
-        ttk.Button(yandex_frame, text="Показать",
-                   command=lambda: self.toggle_password(self.yandex_entry)).grid(row=1, column=1)
-
-        # Cohere
-        cohere_frame = ttk.LabelFrame(self.api_tab, text="Cohere API", padding=10)
-        cohere_frame.pack(fill='x', padx=10, pady=5)
-
-        ttk.Label(cohere_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
-        self.cohere_key_var = tk.StringVar()
-        self.cohere_entry = ttk.Entry(cohere_frame, textvariable=self.cohere_key_var, width=60, show="*")
-        self.cohere_entry.grid(row=1, column=0, padx=(0, 10))
-        ttk.Button(cohere_frame, text="Показать",
-                   command=lambda: self.toggle_password(self.cohere_entry)).grid(row=1, column=1)
+        ttk.Label(deepseek_frame, text="API ключ:").grid(row=0, column=0, sticky='w')
+        self.deepseek_key_var = tk.StringVar()
+        self.deepseek_entry = ttk.Entry(deepseek_frame, textvariable=self.deepseek_key_var, width=60, show="*")
+        self.deepseek_entry.grid(row=1, column=0, padx=(0, 10))
+        ttk.Button(deepseek_frame, text="Показать",
+                   command=lambda: self.toggle_password(self.deepseek_entry)).grid(row=1, column=1)
 
         # Telegram Bot
         telegram_frame = ttk.LabelFrame(self.api_tab, text="Telegram Bot API", padding=10)
@@ -271,10 +242,7 @@ class NeuralNetworkApp:
         networks = [
             ("OpenAI GPT", self.openai_key_var),
             ("Anthropic Claude", self.anthropic_key_var),
-            ("Google Gemini", self.google_key_var),
-            ("YandexGPT", self.yandex_key_var),
-            ("Cohere", self.cohere_key_var),
-            ("Telegram Bot", self.telegram_token_var)
+            ("DeepSeek", self.deepseek_key_var)
         ]
 
         for i, (name, key_var) in enumerate(networks):
@@ -345,9 +313,7 @@ class NeuralNetworkApp:
         """Загрузка конфигурации в UI"""
         self.openai_key_var.set(self.config["api_keys"]["openai"])
         self.anthropic_key_var.set(self.config["api_keys"]["anthropic"])
-        self.google_key_var.set(self.config["api_keys"]["google"])
-        self.yandex_key_var.set(self.config["api_keys"]["yandex"])
-        self.cohere_key_var.set(self.config["api_keys"]["cohere"])
+        self.deepseek_key_var.set(self.config["api_keys"]["deepseek"])
 
         self.telegram_token_var.set(self.config["telegram"]["bot_token"])
         self.telegram_chat_id_var.set(self.config["telegram"]["chat_id"])
@@ -432,14 +398,8 @@ class NeuralNetworkApp:
             networks_to_check.append(("OpenAI GPT", self.openai_key_var.get()))
         if self.anthropic_key_var.get():
             networks_to_check.append(("Anthropic Claude", self.anthropic_key_var.get()))
-        if self.google_key_var.get():
-            networks_to_check.append(("Google Gemini", self.google_key_var.get()))
-        if self.yandex_key_var.get():
-            networks_to_check.append(("YandexGPT", self.yandex_key_var.get()))
-        if self.cohere_key_var.get():
-            networks_to_check.append(("Cohere", self.cohere_key_var.get()))
-        if self.telegram_token_var.get() and self.telegram_chat_id_var.get():
-            networks_to_check.append(("Telegram Bot", self.telegram_token_var.get()))
+        if self.deepseek_key_var.get():
+            networks_to_check.append(("DeepSeek", self.deepseek_key_var.get()))
 
         for name, key in networks_to_check:
             self.check_single_connection(name, key)
@@ -452,14 +412,8 @@ class NeuralNetworkApp:
                 status = self.test_openai_connection(api_key)
             elif network_name == "Anthropic Claude":
                 status = self.test_anthropic_connection(api_key)
-            elif network_name == "Google Gemini":
-                status = self.test_google_connection(api_key)
-            elif network_name == "YandexGPT":
-                status = self.test_yandex_connection(api_key)
-            elif network_name == "Cohere":
-                status = self.test_cohere_connection(api_key)
-            elif network_name == "Telegram Bot":
-                status = self.test_telegram_connection(api_key, self.telegram_chat_id_var.get())
+            elif network_name == "DeepSeek":
+                status = self.test_deepseek_connection(api_key)
             else:
                 status = False
 
@@ -518,50 +472,19 @@ class NeuralNetworkApp:
         except:
             return False
 
-    def test_google_connection(self, api_key):
-        """Тест соединения с Google Gemini"""
+    def test_deepseek_connection(self, api_key):
+        """Тест соединения с DeepSeek"""
         if not api_key:
             return False
 
         try:
-            genai.configure(api_key=api_key)
-            genai.list_models()
+            client = DeepSeekClient(
+                api_key=api_key,
+                base_url="https://api.deepseek.com"
+            )
+            # Простая проверка - попытка получить список моделей
+            client.models.list()
             return True
-        except:
-            return False
-
-    def test_yandex_connection(self, api_key):
-        """Тест соединения с YandexGPT"""
-        if not api_key:
-            return False
-
-        try:
-            return len(api_key) > 20
-        except:
-            return False
-
-    def test_cohere_connection(self, api_key):
-        """Тест соединения с Cohere"""
-        if not api_key:
-            return False
-
-        try:
-            url = "https://api.cohere.ai/v1/models"
-            headers = {"Authorization": f"Bearer {api_key}"}
-            response = requests.get(url, headers=headers, timeout=10)
-            return response.status_code == 200
-        except:
-            return False
-
-    def test_telegram_connection(self, bot_token, chat_id):
-        """Тест соединения с Telegram"""
-        if not bot_token or not chat_id:
-            return False
-
-        try:
-            url = f"https://api.telegram.org/bot{bot_token}/getMe"
-            response = requests.get(url, timeout=10)
-            return response.status_code == 200
         except:
             return False
 
@@ -590,29 +513,11 @@ class NeuralNetworkApp:
             else:
                 failed_connections.append("Anthropic Claude")
 
-        if self.google_key_var.get():
-            if self.check_single_connection("Google Gemini", self.google_key_var.get()):
-                successful_connections.append("Google Gemini")
+        if self.deepseek_key_var.get():
+            if self.check_single_connection("DeepSeek", self.deepseek_key_var.get()):
+                successful_connections.append("DeepSeek")
             else:
-                failed_connections.append("Google Gemini")
-
-        if self.yandex_key_var.get():
-            if self.check_single_connection("YandexGPT", self.yandex_key_var.get()):
-                successful_connections.append("YandexGPT")
-            else:
-                failed_connections.append("YandexGPT")
-
-        if self.cohere_key_var.get():
-            if self.check_single_connection("Cohere", self.cohere_key_var.get()):
-                successful_connections.append("Cohere")
-            else:
-                failed_connections.append("Cohere")
-
-        if self.telegram_token_var.get() and self.telegram_chat_id_var.get():
-            if self.check_single_connection("Telegram Bot", self.telegram_token_var.get()):
-                successful_connections.append("Telegram Bot")
-            else:
-                failed_connections.append("Telegram Bot")
+                failed_connections.append("DeepSeek")
 
         self.show_connection_results(successful_connections, failed_connections)
 
@@ -650,9 +555,7 @@ class NeuralNetworkApp:
         """Сохранение конфигурации"""
         self.config["api_keys"]["openai"] = self.openai_key_var.get()
         self.config["api_keys"]["anthropic"] = self.anthropic_key_var.get()
-        self.config["api_keys"]["google"] = self.google_key_var.get()
-        self.config["api_keys"]["yandex"] = self.yandex_key_var.get()
-        self.config["api_keys"]["cohere"] = self.cohere_key_var.get()
+        self.config["api_keys"]["deepseek"] = self.deepseek_key_var.get()
 
         self.config["telegram"]["bot_token"] = self.telegram_token_var.get()
         self.config["telegram"]["chat_id"] = self.telegram_chat_id_var.get()
@@ -733,7 +636,7 @@ class NeuralNetworkApp:
             if not self.check_internet_connection():
                 return "Ошибка: Нет интернет-соединения"
 
-            client = OpenAI(
+            client = DeepSeekClient(
                 api_key=api_key,
                 base_url="https://api.deepseek.com"
             )
@@ -750,66 +653,12 @@ class NeuralNetworkApp:
             )
             return response.choices[0].message.content
         except Exception as e:
-            return f"Ошибка DeepSeek: {str(e)}"
-
-    def query_yandex(self, question, api_key):
-        """Запрос к YandexGPT"""
-        try:
-            if not self.check_internet_connection():
-                return "Ошибка: Нет интернет-соединения"
-
-            url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
-            headers = {
-                "Authorization": f"Api-Key {api_key}",
-                "Content-Type": "application/json"
-            }
-            data = {
-                "modelUri": f"gpt://{api_key.split('-')[0]}/yandexgpt/latest",
-                "completionOptions": {
-                    "stream": False,
-                    "temperature": 0.6,
-                    "maxTokens": 1000
-                },
-                "messages": [
-                    {"role": "user", "text": question}
-                ]
-            }
-            response = requests.post(url, headers=headers, json=data, timeout=30)
-            if response.status_code == 200:
-                return response.json()["result"]["alternatives"][0]["message"]["text"]
-            elif response.status_code == 401:
+            if "401" in str(e) or "authentication" in str(e).lower():
                 return "Ошибка: Неверный API ключ"
+            elif "429" in str(e):
+                return "Ошибка: Превышен лимит запросов"
             else:
-                return f"Ошибка YandexGPT: {response.status_code}"
-        except Exception as e:
-            return f"Ошибка YandexGPT: {str(e)}"
-
-    def query_cohere(self, question, api_key):
-        """Запрос к Cohere"""
-        try:
-            if not self.check_internet_connection():
-                return "Ошибка: Нет интернет-соединения"
-
-            url = "https://api.cohere.ai/v1/generate"
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
-            data = {
-                "model": "command",
-                "prompt": question,
-                "max_tokens": 1000,
-                "temperature": 0.7
-            }
-            response = requests.post(url, headers=headers, json=data, timeout=30)
-            if response.status_code == 200:
-                return response.json()["generations"][0]["text"]
-            elif response.status_code == 401:
-                return "Ошибка: Неверный API ключ"
-            else:
-                return f"Ошибка Cohere: {response.status_code}"
-        except Exception as e:
-            return f"Ошибка Cohere: {str(e)}"
+                return f"Ошибка DeepSeek: {str(e)}"
 
     def save_responses(self, responses, save_dir, original_file):
         """Сохранение ответов в файл с уникальным именем"""
@@ -885,9 +734,7 @@ class NeuralNetworkApp:
         api_keys = {
             "OpenAI GPT": self.openai_key_var.get(),
             "Anthropic Claude": self.anthropic_key_var.get(),
-            "Google Gemini": self.google_key_var.get(),
-            "YandexGPT": self.yandex_key_var.get(),
-            "Cohere": self.cohere_key_var.get()
+            "DeepSeek": self.deepseek_key_var.get()
         }
 
         # Проверка ключей для выбранных сетей
@@ -941,12 +788,8 @@ class NeuralNetworkApp:
                     response = self.query_openai(question, api_keys[network])
                 elif network == "Anthropic Claude":
                     response = self.query_anthropic(question, api_keys[network])
-                elif network == "Google Gemini":
-                    response = self.query_google(question, api_keys[network])
-                elif network == "YandexGPT":
-                    response = self.query_yandex(question, api_keys[network])
-                elif network == "Cohere":
-                    response = self.query_cohere(question, api_keys[network])
+                elif network == "DeepSeek":
+                    response = self.query_deepseek(question, api_keys[network])
                 else:
                     response = "Неподдерживаемая нейросеть"
 
