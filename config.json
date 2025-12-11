@@ -5,7 +5,10 @@
     "deepseek": "sk-77b408f7576048e4a632b30ade1c1972",
     "groq": "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",
     "openrouter": "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\n",
-    "huggingface": "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"
+    "huggingface": "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",
+    "mistral": "",
+    "gigachat": "",
+    "genapi": ""
   },
   "telegram": {
     "bot_token": "",
